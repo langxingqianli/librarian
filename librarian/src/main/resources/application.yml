@@ -1,0 +1,29 @@
+###### Spring Boot核心配置文件
+### Spring Boot连接数据库JDBC四个基本信息
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/library?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai&useSSL=false&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+    username: root
+    password: root
+### 配置Spring Data JPA相关信息
+  jpa:
+    show-sql: true
+    open-in-view: true
+### 将Thymeleaf默认的转发路径进行修改
+  thymeleaf:
+    cache: false
+    encoding: utf-8
+    prefix: /WEB-INF/view/
+    suffix: .html
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+    

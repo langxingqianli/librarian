@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<!-- Bootstrap Styles-->
+
+		<link href="../../static/css/bootstrap.min.css" rel="stylesheet" />
+		<link href="../../static/css/dataTables.bootstrap.min.css" rel="stylesheet" />
+		<link href="../../static/css/font-awesome.css" rel="stylesheet" />
+		<script src="../../static/js/jquery-3.3.1.min.js"></script>
+		<script src="../../static/js/bootstrap.min.js"></script>
+		<script src="../../static/js/jquery.dataTables.min.js"></script>
+		<script src="../../static/js/dataTables.bootstrap.min.js"></script>
+		<script type="text/javascript">
+			var table;
+	    	$(function() {
+				table = $("#mytable").DataTable({
+					// 关闭搜索框
+					"searching": false,
+					// 关闭下拉每页显示数量
+					"lengthChange": false,
+					// 关闭排序功能
+					"paging": true,//开启分页
+					"sort": false,
+					"serverSide":true,
+					"processing": true,//刷新的那个对话框
+					
+					"ajax":{
+						"url":"/book/list",
+						"type":"get",
+						//自定义查询携带参数
+						"data": function(d) {
+						
+							var pageNum = (d.start / d.length) + 1;
+							var pageSize = d.length;
+							var draw = d.draw;
+							var query = $("#query").val();
+							var mydata = {
+									"pageNum":pageNum,
+									"pageSize":pageSize,
+									"draw":draw,
+									"query":query
+									
+							}
+							return $.extend(mydata, "");
+						},
+						// 过滤服务器回传数据类型
+						"dataType":"json",
+						"dataFilter": function(json) {
+							json = JSON.parse(json);
+							var returnData = {};
+							returnData.draw = json.draw;
+							// 返回数据全部记录
+							returnData.recordsTotal = json.page.totalCount;
+							// 后台不实现过滤功能，每次查询均视作全部结果
+				            returnData.recordsFiltered = json.page.totalCount;
+							// 设定查询列表，对于DataTables来说，获取列表的key必须是data
+							returnData.data = json.page.list;
+							return JSON.stringify(returnData);
+						}
+					
+						
+					},
+					"columnDefs": [
+						{  
+							// 指定渲染的列下标
+							"targets": 0,
+							// 指定渲染的内容
+							"render": 
+								function(data, type, row, mate) {
+								
+								return (mate.row + 1)+(mate.settings._iDisplayStart * mate.settings._iDisplayLength)/mate.settings._iDisplayLength;
+								}
+						
+						},
+						{
+							"targets": 1,
+							"render": function(data, type, row, mate) {
+								return row.bookName;
+							}
+						}, 
+						
+						{
+						"targets": 2,
+						"render": function(data, type, row, mate) {
+							return row.author;
+						}
+					},
+					{
+						"targets": 3,
+						"render": function(data, type, row, mate) {
+							return row.publish;
+						}
+					},
+					{
+						"targets": 4,
+						"render": function(data, type, row, mate) {
+							return row.publishDate;
+						}
+					},
+					{
+						"targets": 5,
+						"render": function(data, type, row, mate) {
+							return row.page;
+						}
+					},
+					{
+						"targets": 6,
+						"render": function(data, type, row, mate) {
+							return row.price;
+						}
+					},
+					{
+						"targets": 7,
+						"render": function(data, type, row, mate) {
+							return row.content;
+						}
+					},
+				 {
+						"targets": 8,
+						"render": function(data, type, row, mate) {
+							
+							var detailBtn = "<a href='javascript:openDetailModal(\" " + row.bookId + "  \")' class='btn btn-primary btn-xs'><i class='fa fa-file-text-o'></i>&nbsp;详情</a>"
+							var updateBtn = "<a href='javascript:openUpdateModal(\" " + row.bookId + " \")' class='btn btn-warning btn-xs'><i class='fa fa-wrench'></i>&nbsp;修改</a>";
+							var deleteBth = "<a href='javascript:openDeleteModal(\" " + row.bookId + " \")' class='btn btn-danger btn-xs'><i class='fa fa-wrench'></i>&nbsp;删除</a>";
+							return detailBtn + "&nbsp;" + updateBtn + "&nbsp;" + deleteBth ;
+						}
+					}],
+					"language": {
+		                "url": "/static/js/Chinese.json"
+		            }
+					
+					
+				});
+			});
+			 function search() {
+				table.draw();
+			}
+			 function openSaveBook() {
+				location.href="/book/addbook";
+			}
+			 function openUpdateModal(bookId) {
+					location.href="/book/updatebook?bookId=" + bookId;
+			}
+			 function openDetailModal(bookId) {
+					location.href="/book/detailbook?bookId=" + bookId;
+			}
+			 function openDeleteModal(bookId){ 
+				 $.ajax({
+					 type:"delete", 
+					 url : "/book/delete/"+bookId, 
+					 dataType:"json", 
+					 success:function(data){ 
+						 if (data) {
+							alert("删除成功");
+							location.href="/book/index";
+						 } else {
+							alert("删除失败");
+							location.href="/book/index";
+						 }
+						// 重新刷新表格
+						mytable.draw();
+					 }
+				 }); 
+			 };
+	    </script>
+</head>
+<body>
+	<section class="content">
+      		<div class="row">
+        		<div class="col-xs-12">
+          			<div class="box">
+          				<div class="box-header">
+              				<h3 class="box-title" style="font: bold;">
+              					<i class="fa fa-area-chart"></i>&nbsp;
+              					图书信息列表
+              				</h3>
+            			</div>
+            			<div class="box-body">
+              				<table id="mytable" class="table table-bordered table-hover">
+          						<thead>
+          							<tr>
+          								<td colspan="9">
+											<nav class="navbar navbar-default" role="navigation" style="margin: 0px;">
+        										<!--向左对齐-->
+        										<form class="navbar-form navbar-left" role="search">
+            										<a type="button" class="btn btn-primary" onclick="openSaveBook();">
+                										<i class="fa fa-plus"></i>&nbsp;
+                										新增书本
+            										</a>
+        										</form>
+        										<!--向右对齐-->
+        										<form class="navbar-form navbar-right" role="search" style="margin-right: 0px;">
+        											<div class="input-group">
+            											<input type="text" id="query" class="form-control" style="width: 220px; height: 37px;" placeholder="请输入书名或着出版社">
+            											<span class="input-group-addon">
+            												<button type="button" class="btn btn-success btn-xs" onclick="search();">
+            													<i class="fa fa-search"></i>&nbsp;
+            													搜索
+            												</button>
+            											</span>
+        											</div>
+        										</form>
+											</nav>
+          								</td>
+          							</tr>
+          							<tr>
+          								<th>序号</th>
+          								<th>书名</th>
+          								<th>作者</th>
+          								<th>出版社</th>
+          								<th>出版时间</th>
+          								<th>页数</th>
+          								<th>价格</th>
+          								<th>主要内容</th>
+          								<th>操作</th>
+          							</tr>
+          						</thead>
+          					</table>
+          				</div>
+          			</div>
+          		</div>
+          	</div>
+		</section>
+</body>
+</html>
